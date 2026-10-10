@@ -1,0 +1,25 @@
+services:
+  app:
+    image: zzci/bt
+    container_name: bt
+    restart: unless-stopped
+    networks:
+      - traefik
+    ports:
+      # WebUI is reachable on the traefik network at http://bt:8080;
+      # only the BitTorrent port needs to be published.
+      - 6881:6881
+      - 6881:6881/udp
+    volumes:
+      - ./data:/data
+      - ./downloads:/downloads
+    # Override UID/GID explicitly (default: owner of ./data, else 1000):
+    # environment:
+    #   - PUID=1000
+    #   - PGID=1000
+    #   - TZ=Asia/Shanghai
+
+networks:
+  traefik:
+    external: true
+    name: traefik
