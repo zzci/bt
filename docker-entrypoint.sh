@@ -32,6 +32,20 @@ WebUI\Address=*
 EOF
 fi
 
+# Apply a login staged by reset-password: drop the old credentials and put
+# the new hash under [Preferences].
+if [ -f /data/.reset-password ]; then
+    LINE="$(cat /data/.reset-password)" awk '
+        /^WebUI\\(Password_PBKDF2|Username)=/ { next }
+        { print }
+        /^\[Preferences\]/ { print ENVIRON["LINE"]; done = 1 }
+        END { if (!done) { print "\n[Preferences]"; print ENVIRON["LINE"] } }
+    ' "$CONF" > "$CONF.new"
+    mv "$CONF.new" "$CONF"
+    rm -f /data/.reset-password
+    echo "WebUI login reset by reset-password (username: admin)"
+fi
+
 chown -R "$PUID:$PGID" /data
 chown "$PUID:$PGID" /downloads
 
