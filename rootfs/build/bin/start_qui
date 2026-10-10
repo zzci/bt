@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+RUN_USER="$(/build/bin/run_user)"
+
+mkdir -p /data/qui
+chown -R "$RUN_USER" /data/qui
+
+export HOME=/data
+exec su-exec "$RUN_USER" qui serve --config-dir /data/qui

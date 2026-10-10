@@ -6,18 +6,27 @@ services:
     networks:
       - traefik
     ports:
-      # WebUI is reachable on the traefik network at http://bt:8080;
-      # only the BitTorrent port needs to be published.
+      # qui (7476) and the qBittorrent WebUI (8080) are reachable on the
+      # traefik network; only the BitTorrent port needs to be published.
       - 6881:6881
       - 6881:6881/udp
     volumes:
       - ./data:/data
       - ./downloads:/downloads
-    # Override UID/GID explicitly (default: owner of ./data, else 1000):
-    # environment:
-    #   - PUID=1000
-    #   - PGID=1000
-    #   - TZ=Asia/Shanghai
+    environment:
+      # qui's built-in login is off: authentication is done by the reverse
+      # proxy, and only clients on the traefik network may connect.
+      # Remove these three to get qui's own login back.
+      - QUI__AUTH_DISABLED=true
+      - QUI__I_ACKNOWLEDGE_THIS_IS_A_BAD_IDEA=true
+      - QUI__AUTH_DISABLED_ALLOWED_CIDRS=127.0.0.1/32,172.18.0.0/16
+      - QUI__ALLOWED_HOSTS=qui.amd.a.et,localhost,127.0.0.1
+      # Override UID/GID explicitly (default: owner of ./data, else 1000):
+      # - PUID=1000
+      # - PGID=1000
+      # - TZ=Asia/Shanghai
+      # Run without qui:
+      # - ZSRV_QUI=0
 
 networks:
   traefik:

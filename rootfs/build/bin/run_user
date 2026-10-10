@@ -1,0 +1,12 @@
+#!/bin/sh
+# Print the uid:gid the services run as.
+# PUID/PGID env > owner of /data (when non-root) > 1000
+mkdir -p /data
+if [ -z "$PUID" ] || [ -z "$PGID" ]; then
+    probe_uid="$(stat -c '%u' /data)"
+    if [ "$probe_uid" != "0" ]; then
+        : "${PUID:=$probe_uid}"
+        : "${PGID:=$(stat -c '%g' /data)}"
+    fi
+fi
+echo "${PUID:-1000}:${PGID:-1000}"

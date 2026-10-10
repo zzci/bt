@@ -5,21 +5,12 @@ set -e
 : "${BT_PORT:=6881}"
 
 CONF=/data/qBittorrent/config/qBittorrent.conf
+RUN_USER="$(/build/bin/run_user)"
 
-mkdir -p /data /downloads
-
-# PUID/PGID env > owner of /data (when non-root) > 1000
-if [ -z "$PUID" ] || [ -z "$PGID" ]; then
-    probe_uid="$(stat -c '%u' /data)"
-    if [ "$probe_uid" != "0" ]; then
-        : "${PUID:=$probe_uid}"
-        : "${PGID:=$(stat -c '%g' /data)}"
-    fi
-fi
-: "${PUID:=1000}"
-: "${PGID:=1000}"
+mkdir -p /downloads
 
 # Seed defaults on first start only; later changes belong to the WebUI.
+# LocalHostAuth=false lets the bundled qui reach the API without credentials.
 if [ ! -f "$CONF" ]; then
     mkdir -p "$(dirname "$CONF")"
     cat > "$CONF" <<EOF
@@ -29,6 +20,7 @@ Session\TempPath=/downloads/incomplete
 
 [Preferences]
 WebUI\Address=*
+WebUI\LocalHostAuth=false
 EOF
 fi
 
@@ -46,13 +38,12 @@ if [ -f /data/.reset-password ]; then
     echo "WebUI login reset by reset-password (username: admin)"
 fi
 
-chown -R "$PUID:$PGID" /data
-chown "$PUID:$PGID" /downloads
+chown -R "$RUN_USER" /data/qBittorrent
+chown "$RUN_USER" /data /downloads
 
 export HOME=/data
-exec su-exec "$PUID:$PGID" qbittorrent-nox \
+exec su-exec "$RUN_USER" qbittorrent-nox \
     --profile=/data \
     --webui-port="$WEBUI_PORT" \
     --torrenting-port="$BT_PORT" \
-    --confirm-legal-notice \
-    "$@"
+    --confirm-legal-notice
